@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Albatross Voice Codec Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    color: white;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 32px;
+    background: #111827;
+}
+
+.header img {
+    height: 144px;
+}
+
+.header span {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.card {
+    background: #1f2937;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+input, button, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: #22c55e;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #16a34a;
+}
+
+textarea {
+    height: 120px;
+}
+
+.status {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #93c5fd;
+}
+
+audio {
+    width: 100%;
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <img src="logo.png">
+    <span>🔊 Albatross Voice Codec Dashboard</span>
+</div>
+
+<div class="container">
+
+<!-- ENCODE -->
+<div class="card">
+    <h3>🎙 Encode Text → WAV</h3>
+
+    <input id="encode_text" placeholder="Enter text">
+    <input id="encode_key" placeholder="Key (optional)">
+    <input id="encode_filename" placeholder="Filename (e.g. voice.wav)">
+
+    <button onclick="encode()">Encode & Download</button>
+
+    <p class="status" id="encode_status"></p>
+    <audio id="audio_player" controls></audio>
+</div>
+
+<!-- DECODE -->
+<div class="card">
+    <h3>🔓 Decode WAV → Text</h3>
+
+    <input type="file" id="file_input" accept=".wav,audio/wav">
+    <input id="decode_key" placeholder="Key (optional)">
+
+    <button onclick="decode()">Decode File</button>
+
+    <p class="status" id="decode_status"></p>
+    <textarea id="output"></textarea>
+</div>
+
+</div>
+
+<script>
+const BASE_URL = "https://albatrossvoice.onrender.com";
+
+/* =========================
+   ENCODE
+========================= */
+async function encode() {
+    const text = document.getElementById("encode_text").value;
+    const key = document.getElementById("encode_key").value;
+    const filename = document.getElementById("encode_filename").value || "output.wav";
+
+    document.getElementById("encode_status").innerText = "Encoding...";
+
+    try {
+        const res = await fetch(BASE_URL + "/encode", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: text,
+                key: key ? parseInt(key) : null,
+                filename: filename
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            document.getElementById("encode_status").innerText = err;
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+
+        document.getElementById("audio_player").src = url;
+        document.getElementById("encode_status").innerText = "✅ Done";
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("encode_status").innerText = "❌ Server error";
+    }
+}
+
+
+/* =========================
+   DECODE (FIXED SAFE UPLOAD)
+========================= */
+async function decode() {
+    const file = document.getElementById("file_input").files[0];
+    const key = document.getElementById("decode_key").value;
+
+    if (!file) {
+        alert("Select WAV file first");
+        return;
+    }
+
+    document.getElementById("decode_status").innerText = "Decoding...";
+
+    try {
+        const formData = new FormData();
+
+        // 🔥 CRITICAL: preserve raw WAV binary
+        formData.append("file", file, file.name);
+        formData.append("key", key || "");
+
+        const res = await fetch(BASE_URL + "/decode", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            document.getElementById("decode_status").innerText = err;
+            return;
+        }
+
+        const data = await res.json();
+        document.getElementById("output").value = data.decoded;
+
+        document.getElementById("decode_status").innerText = "✅ Done";
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("decode_status").innerText = "❌ Server error";
+    }
+}
+</script>
+
+</body>
+</html>
