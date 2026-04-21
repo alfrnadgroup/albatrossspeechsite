@@ -14,12 +14,24 @@ body {
 
 .header {
     text-align: center;
-    padding: 20px;
+    padding: 25px;
     background: #111827;
 }
 
 .header img {
     height: 80px;
+}
+
+.subtitle {
+    color: #93c5fd;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.section {
+    padding: 15px 25px;
+    font-size: 13px;
+    color: #cbd5e1;
 }
 
 .container {
@@ -39,47 +51,107 @@ input, button, textarea {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
+    border-radius: 8px;
+    border: none;
 }
 
 button {
     background: #22c55e;
     color: white;
     font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #16a34a;
+}
+
+textarea {
+    height: 120px;
+}
+
+.status {
+    font-size: 12px;
+    color: #93c5fd;
+    margin-top: 8px;
+}
+
+.demo-btn {
+    background: #3b82f6;
+}
+
+.demo-btn:hover {
+    background: #2563eb;
+}
+
+audio {
+    margin-top: 10px;
+    width: 100%;
 }
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
     <img src="logo.png">
     <h2>Albatross Speech Codec</h2>
+    <div class="subtitle">
+        Experimental phoneme-based speech synthesis & audio codec system
+    </div>
+</div>
+
+<!-- WHAT IS THIS -->
+<div class="section">
+    <b>What is this?</b><br>
+    A research-grade speech codec that converts text into robotic phoneme-based audio,
+    and decodes audio back into text using frequency analysis.<br><br>
+
+    The system is informed by signal processing research and explores
+    extensions into nonlinear and chaotic signal dynamics, with future capability
+    to mimic chaotic acoustic phenomena for advanced encoding, obfuscation,
+    and synthetic speech generation.
 </div>
 
 <div class="container">
 
 <!-- ENCODE -->
 <div class="card">
-    <h3>Encode</h3>
+    <h3>?? Encode Text ? Speech</h3>
 
     <input id="text" placeholder="Enter text">
+
     <input id="filename" placeholder="filename.wav (optional)">
+
     <input id="key" placeholder="key (optional)">
 
     <button onclick="encode()">Encode & Download</button>
+
+    <button class="demo-btn" onclick="demoEncode()">
+        Try Demo: Hello World
+    </button>
+
+    <div class="status" id="enc_status"></div>
 
     <audio id="audio" controls></audio>
 </div>
 
 <!-- DECODE -->
 <div class="card">
-    <h3>Decode</h3>
+    <h3>?? Decode Speech ? Text</h3>
 
-    <input type="file" id="file">
+    <input type="file" id="file" accept=".wav,audio/wav">
 
-    <button onclick="decode()">Decode</button>
+    <button onclick="decode()">Decode File</button>
 
-    <textarea id="out"></textarea>
+    <button class="demo-btn" onclick="demoDecode()">
+        Try Demo Decode
+    </button>
+
+    <div class="status" id="dec_status"></div>
+
+    <textarea id="out" placeholder="Decoded text will appear here"></textarea>
 </div>
 
 </div>
@@ -91,38 +163,80 @@ const BASE = "https://albatrossspeech.onrender.com";
 async function encode() {
     const text = document.getElementById("text").value;
     const filename = document.getElementById("filename").value || "speech.wav";
+    const key = document.getElementById("key").value;
 
-    const res = await fetch(BASE + "/encode", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text, filename})
-    });
+    document.getElementById("enc_status").innerText = "Encoding...";
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    try {
+        const res = await fetch(BASE + "/encode", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: text,
+                filename: filename,
+                key: key ? parseInt(key) : null
+            })
+        });
 
-    document.getElementById("audio").src = url;
+        if (!res.ok) throw new Error();
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        document.getElementById("audio").src = url;
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+
+        document.getElementById("enc_status").innerText = "Done ?";
+
+    } catch (err) {
+        document.getElementById("enc_status").innerText = "Encode failed ?";
+    }
 }
 
 /* ---------------- DECODE ---------------- */
 async function decode() {
     const file = document.getElementById("file").files[0];
 
-    const form = new FormData();
-    form.append("file", file, file.name);
+    if (!file) {
+        alert("Select WAV file first");
+        return;
+    }
 
-    const res = await fetch(BASE + "/decode", {
-        method: "POST",
-        body: form
-    });
+    document.getElementById("dec_status").innerText = "Decoding...";
 
-    const data = await res.json();
-    document.getElementById("out").value = data.decoded;
+    try {
+        const form = new FormData();
+        form.append("file", file, file.name);
+
+        const res = await fetch(BASE + "/decode", {
+            method: "POST",
+            body: form
+        });
+
+        if (!res.ok) throw new Error();
+
+        const data = await res.json();
+
+        document.getElementById("out").value = data.decoded;
+        document.getElementById("dec_status").innerText = "Done ?";
+
+    } catch (err) {
+        document.getElementById("dec_status").innerText = "Decode failed ?";
+    }
+}
+
+/* ---------------- DEMO ---------------- */
+function demoEncode() {
+    document.getElementById("text").value = "hello world";
+    encode();
+}
+
+function demoDecode() {
+    alert("Upload the generated WAV file to decode.");
 }
 </script>
 
