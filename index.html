@@ -19,12 +19,18 @@ body {
 }
 
 .header img {
-    height: 80px;
+    height: 120px; /* ?? larger logo */
 }
 
 .subtitle {
     color: #93c5fd;
     font-size: 14px;
+    margin-top: 5px;
+}
+
+.subnote {
+    color: #cbd5e1;
+    font-size: 13px;
     margin-top: 5px;
 }
 
@@ -97,8 +103,13 @@ audio {
 <div class="header">
     <img src="logo.png">
     <h2>Albatross Speech Codec</h2>
+
     <div class="subtitle">
         Experimental phoneme-based speech synthesis & audio codec system
+    </div>
+
+    <div class="subnote">
+        Training and Learning Purposes: you could transform your full name to robotic music
     </div>
 </div>
 
@@ -118,12 +129,10 @@ audio {
 
 <!-- ENCODE -->
 <div class="card">
-    <h3>?? Encode Text ? Speech</h3>
+    <h3>Encode Text to Speech</h3>
 
     <input id="text" placeholder="Enter text">
-
     <input id="filename" placeholder="filename.wav (optional)">
-
     <input id="key" placeholder="key (optional)">
 
     <button onclick="encode()">Encode & Download</button>
@@ -139,7 +148,7 @@ audio {
 
 <!-- DECODE -->
 <div class="card">
-    <h3>?? Decode Speech ? Text</h3>
+    <h3>Decode Speech to Text</h3>
 
     <input type="file" id="file" accept=".wav,audio/wav">
 
