@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Albatross Voice Codec Dashboard</title>
+<title>Albatross Speech Codec Dashboard</title>
 
 <style>
 body {
@@ -83,14 +83,14 @@ audio {
 
 <div class="header">
     <img src="logo.png">
-    <span>🔊 Albatross Voice Codec Dashboard</span>
+    <span>?? Albatross Speech Codec</span>
 </div>
 
 <div class="container">
 
 <!-- ENCODE -->
 <div class="card">
-    <h3>🎙 Encode Text → WAV</h3>
+    <h3>?? Encode Text ? Speech WAV</h3>
 
     <input id="encode_text" placeholder="Enter text">
     <input id="encode_key" placeholder="Key (optional)">
@@ -102,23 +102,21 @@ audio {
     <audio id="audio_player" controls></audio>
 </div>
 
-<!-- DECODE -->
+<!-- DECODE (DISABLED FOR NOW) -->
 <div class="card">
-    <h3>🔓 Decode WAV → Text</h3>
+    <h3>?? Decode WAV ? Text</h3>
 
-    <input type="file" id="file_input" accept=".wav,audio/wav">
-    <input id="decode_key" placeholder="Key (optional)">
+    <p style="color:#fca5a5;">
+        ?? Decode is not available in speech mode yet
+    </p>
 
-    <button onclick="decode()">Decode File</button>
-
-    <p class="status" id="decode_status"></p>
-    <textarea id="output"></textarea>
+    <textarea placeholder="Coming soon..."></textarea>
 </div>
 
 </div>
 
 <script>
-const BASE_URL = "https://albatrossvoice.onrender.com";
+const BASE_URL = "https://albatrossspeech.onrender.com";
 
 /* =========================
    ENCODE
@@ -136,8 +134,7 @@ async function encode() {
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 text: text,
-                key: key ? parseInt(key) : null,
-                filename: filename
+                key: key ? parseInt(key) : null
             })
         });
 
@@ -156,55 +153,11 @@ async function encode() {
         a.click();
 
         document.getElementById("audio_player").src = url;
-        document.getElementById("encode_status").innerText = "✅ Done";
+        document.getElementById("encode_status").innerText = "? Done";
 
     } catch (err) {
         console.error(err);
-        document.getElementById("encode_status").innerText = "❌ Server error";
-    }
-}
-
-
-/* =========================
-   DECODE (FIXED SAFE UPLOAD)
-========================= */
-async function decode() {
-    const file = document.getElementById("file_input").files[0];
-    const key = document.getElementById("decode_key").value;
-
-    if (!file) {
-        alert("Select WAV file first");
-        return;
-    }
-
-    document.getElementById("decode_status").innerText = "Decoding...";
-
-    try {
-        const formData = new FormData();
-
-        // 🔥 CRITICAL: preserve raw WAV binary
-        formData.append("file", file, file.name);
-        formData.append("key", key || "");
-
-        const res = await fetch(BASE_URL + "/decode", {
-            method: "POST",
-            body: formData
-        });
-
-        if (!res.ok) {
-            const err = await res.text();
-            document.getElementById("decode_status").innerText = err;
-            return;
-        }
-
-        const data = await res.json();
-        document.getElementById("output").value = data.decoded;
-
-        document.getElementById("decode_status").innerText = "✅ Done";
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById("decode_status").innerText = "❌ Server error";
+        document.getElementById("encode_status").innerText = "? Server error";
     }
 }
 </script>
