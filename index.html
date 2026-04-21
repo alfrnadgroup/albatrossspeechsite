@@ -2,32 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Albatross Speech Codec Dashboard</title>
+<title>Albatross Speech Codec</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     background: #0b1220;
     color: white;
 }
 
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    padding: 32px;
+    text-align: center;
+    padding: 30px;
     background: #111827;
-}
-
-.header img {
-    height: 144px;
-}
-
-.header span {
-    font-size: 28px;
-    font-weight: bold;
 }
 
 .container {
@@ -55,26 +43,10 @@ button {
     background: #22c55e;
     color: white;
     font-weight: bold;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #16a34a;
 }
 
 textarea {
     height: 120px;
-}
-
-.status {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #93c5fd;
-}
-
-audio {
-    width: 100%;
-    margin-top: 10px;
 }
 </style>
 </head>
@@ -82,35 +54,34 @@ audio {
 <body>
 
 <div class="header">
-    <img src="logo.png">
-    <span>?? Albatross Speech Codec</span>
+    <h2>?? Albatross Speech Codec</h2>
 </div>
 
 <div class="container">
 
 <!-- ENCODE -->
 <div class="card">
-    <h3>?? Encode Text ? Speech WAV</h3>
+    <h3>Encode</h3>
 
-    <input id="encode_text" placeholder="Enter text">
-    <input id="encode_key" placeholder="Key (optional)">
-    <input id="encode_filename" placeholder="Filename (e.g. voice.wav)">
+    <input id="text" placeholder="Enter text">
+    <input id="key" placeholder="Key (optional)">
+    <input id="filename" placeholder="filename.wav">
 
-    <button onclick="encode()">Encode & Download</button>
+    <button onclick="encode()">Encode</button>
 
-    <p class="status" id="encode_status"></p>
-    <audio id="audio_player" controls></audio>
+    <audio id="audio" controls></audio>
+    <p id="status"></p>
 </div>
 
-<!-- DECODE (DISABLED FOR NOW) -->
+<!-- DECODE -->
 <div class="card">
-    <h3>?? Decode WAV ? Text</h3>
+    <h3>Decode</h3>
 
-    <p style="color:#fca5a5;">
-        ?? Decode is not available in speech mode yet
-    </p>
+    <input type="file" id="file">
 
-    <textarea placeholder="Coming soon..."></textarea>
+    <button onclick="decode()">Decode</button>
+
+    <textarea id="out"></textarea>
 </div>
 
 </div>
@@ -118,47 +89,38 @@ audio {
 <script>
 const BASE_URL = "https://albatrossspeech.onrender.com";
 
-/* =========================
-   ENCODE
-========================= */
+/* ENCODE */
 async function encode() {
-    const text = document.getElementById("encode_text").value;
-    const key = document.getElementById("encode_key").value;
-    const filename = document.getElementById("encode_filename").value || "output.wav";
+    const text = document.getElementById("text").value;
+    const key = document.getElementById("key").value;
+    const filename = document.getElementById("filename").value || "output.wav";
 
-    document.getElementById("encode_status").innerText = "Encoding...";
+    const res = await fetch(BASE_URL + "/encode", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text, key, filename})
+    });
 
-    try {
-        const res = await fetch(BASE_URL + "/encode", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                text: text,
-                key: key ? parseInt(key) : null
-            })
-        });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
 
-        if (!res.ok) {
-            const err = await res.text();
-            document.getElementById("encode_status").innerText = err;
-            return;
-        }
+    document.getElementById("audio").src = url;
+}
 
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+/* DECODE */
+async function decode() {
+    const file = document.getElementById("file").files[0];
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
+    const form = new FormData();
+    form.append("file", file);
 
-        document.getElementById("audio_player").src = url;
-        document.getElementById("encode_status").innerText = "? Done";
+    const res = await fetch(BASE_URL + "/decode", {
+        method: "POST",
+        body: form
+    });
 
-    } catch (err) {
-        console.error(err);
-        document.getElementById("encode_status").innerText = "? Server error";
-    }
+    const data = await res.json();
+    document.getElementById("out").value = data.decoded;
 }
 </script>
 
