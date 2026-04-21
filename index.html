@@ -39,19 +39,12 @@ input, button, textarea {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
-    border-radius: 8px;
-    border: none;
 }
 
 button {
     background: #22c55e;
     color: white;
     font-weight: bold;
-    cursor: pointer;
-}
-
-textarea {
-    height: 120px;
 }
 </style>
 </head>
@@ -67,7 +60,7 @@ textarea {
 
 <!-- ENCODE -->
 <div class="card">
-    <h3>Encode ? WAV</h3>
+    <h3>Encode</h3>
 
     <input id="text" placeholder="Enter text">
     <input id="filename" placeholder="filename.wav (optional)">
@@ -80,9 +73,9 @@ textarea {
 
 <!-- DECODE -->
 <div class="card">
-    <h3>Decode WAV ? Text</h3>
+    <h3>Decode</h3>
 
-    <input type="file" id="file" accept=".wav">
+    <input type="file" id="file">
 
     <button onclick="decode()">Decode</button>
 
@@ -94,57 +87,34 @@ textarea {
 <script>
 const BASE = "https://albatrossspeech.onrender.com";
 
-/* -----------------------
-   ENCODE
------------------------- */
+/* ---------------- ENCODE ---------------- */
 async function encode() {
     const text = document.getElementById("text").value;
-    const filename = document.getElementById("filename").value || "output.wav";
-    const key = document.getElementById("key").value;
+    const filename = document.getElementById("filename").value || "speech.wav";
 
     const res = await fetch(BASE + "/encode", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            text: text,
-            filename: filename,
-            key: key ? parseInt(key) : null
-        })
+        body: JSON.stringify({text, filename})
     });
-
-    if (!res.ok) {
-        alert(await res.text());
-        return;
-    }
 
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
-    // audio preview
     document.getElementById("audio").src = url;
 
-    // force download
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
-    document.body.appendChild(a);
     a.click();
-    a.remove();
 }
 
-/* -----------------------
-   DECODE
------------------------- */
+/* ---------------- DECODE ---------------- */
 async function decode() {
     const file = document.getElementById("file").files[0];
 
-    if (!file) {
-        alert("Select WAV file first");
-        return;
-    }
-
     const form = new FormData();
-    form.append("file", file);
+    form.append("file", file, file.name);
 
     const res = await fetch(BASE + "/decode", {
         method: "POST",
